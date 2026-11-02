@@ -1,0 +1,59 @@
+# Environment variables - should NOT be committed
+.env
+
+# Logs and temporary files
+*.log
+*.out
+*.err
+
+# Database logs and temp files
+cf_err.log
+cf_out.log
+cf2_*.log
+cf3_*.log
+lt_*.log
+run_*.log
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node modules (from previous attempts)
+node_modules/
+package-lock.json
+
+# executables and tunnels
+cloudflared.exe
+lt
+lt.cmd
+lt.ps1
+
+# Extraneous files
+*.bat
+fix-bot-*.ps1
+run-fix.bat
+virtbot_replit_setup.py
+AUDIT*.md
+FIXES.md
+ACTIONABLE*.md
+FINAL_*.md
+IMMEDIATE_*.md
+QUICK_*.txt
+turn.txt
+*.png
+
+# Keep only essential files and documentation
