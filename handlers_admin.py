@@ -1,10 +1,8 @@
 """Обработчики для администраторов."""
-from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram import Router
+from aiogram.types import Message
 from aiogram.filters import Command
 
-import db
-import keyboards as kb
 from config import CFG
 
 router = Router()
@@ -17,8 +15,5 @@ async def cmd_admin(message: Message):
         await message.answer("❌ Доступ запрещён")
         return
     
-    await message.answer(
-        "⚙️ **Админ-панель:**\n\n"
-        "Выбери действие:",
-        reply_markup=kb.admin_menu()
-    )
+    text = "⚙️ <b>Админ-панель:</b>\n\nВыбери действие:"
+    await message.answer(text)
