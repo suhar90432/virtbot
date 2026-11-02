@@ -54,6 +54,7 @@ class Config:
     webapp_host: str = os.getenv("WEBAPP_HOST", "0.0.0.0").strip()
     webapp_port: int = _env_int("WEBAPP_PORT", 8080)
     webapp_url: str = os.getenv("WEBAPP_URL", "").strip()
+    restart_secret: str = os.getenv("RESTART_SECRET", "").strip()
     telegram_ip: str = os.getenv("TELEGRAM_IP", "").strip()
     proxy_url: str = os.getenv("PROXY_URL", "").strip()
     proxy_file: str = os.getenv("PROXY_FILE", "").strip()

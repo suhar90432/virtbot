@@ -155,7 +155,11 @@ async def ensure_login(bot: Bot, pool: ProxyPool) -> bool:
 
 
 async def polling_supervisor(bot: Bot, dp: Dispatcher, pool: ProxyPool) -> None:
-    """Держит polling живым: при падении перезапускает после восстановления связи."""
+    """Держит polling живым: при падении перезапускает после восстановления связи.
+    
+    Также проверяет флаг перезагрузки из /restart endpoint и завершает цикл,
+    позволяя Replit автоматически перезагрузить процесс.
+    """
     delay = 3.0
     while True:
         try:
@@ -177,6 +181,8 @@ async def polling_supervisor(bot: Bot, dp: Dispatcher, pool: ProxyPool) -> None:
             raise
         except Exception as e:
             log.warning("Polling упал: %s: %s. Перезапуск через %.0f с", type(e).__name__, e, delay)
+            await asyncio.sleep(delay + random.uniform(0, 1.0))
+            delay = min(delay * 1.6, 60.0)
             await asyncio.sleep(delay)
             delay = min(delay * 1.6, 60.0)
 
@@ -190,8 +196,12 @@ async def main() -> None:
     if not CFG.admins:
         log.warning("ADMIN_IDS пуст — админ-панель будет недоступна.")
 
+    if not CFG.restart_secret:
+        log.warning("RESTART_SECRET не задан в .env — endpoint /restart будет заблокирован")
+
     db.init_db()
     runner = await start_webapp()
+    app = runner.app  # ← Получаем ссылку на webapp для проверки флага перезагрузки
 
     pool = ProxyPool(CFG.token, CFG.db_path.parent / "proxies.json", target=CFG.proxy_target)
     pool.load()
@@ -226,7 +236,14 @@ async def main() -> None:
                     log.warning("send_message timeout для админа %s", admin_id)
                 except Exception:
                     pass
-            await polling_supervisor(bot, dp, pool)
+            
+            # Запускаем polling с проверкой флага перезагрузки
+            while not app.get("restart_requested", False):
+                await polling_supervisor(bot, dp, pool)
+                if app.get("restart_requested", False):
+                    log.info("Restart requested — останавливаю polling и завершаю процесс")
+                    break
+                await asyncio.sleep(1)  # Небольшая пауза перед следующим cycle
         else:
             log.error("Запуск отменён: не удалось авторизоваться в Telegram.")
     finally:

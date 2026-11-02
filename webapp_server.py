@@ -548,15 +548,45 @@ async def page_health(request: web.Request) -> web.Response:
     return web.json_response({"ok": True, "time": datetime.now().isoformat(timespec="seconds")})
 
 
+async def page_restart(request: web.Request) -> web.Response:
+    """Инициирует перезагрузку бота (вызывает signal в main loop).
+    
+    GET /restart?key=VIRTBOT_RESTART_SECRET
+    Требует правильный ключ для безопасности.
+    """
+    key = request.query.get("key", "")
+    secret = CFG.restart_secret or ""
+    
+    if not secret:
+        log.warning("Restart endpoint: RESTART_SECRET не установлен в .env")
+        raise web.HTTPForbidden(text="Restart disabled: no secret configured")
+    
+    if key != secret:
+        log.warning("Restart attempt with wrong key from %s", request.remote)
+        raise web.HTTPUnauthorized(text="Invalid restart key")
+    
+    # Установить флаг перезагрузки в приложение
+    request.app["restart_requested"] = True
+    log.info("Restart requested from %s - signaling main loop", request.remote)
+    
+    return web.json_response({
+        "status": "restarting",
+        "message": "Bot restart signal sent",
+        "timestamp": datetime.now().isoformat(timespec="seconds")
+    })
+
+
 def create_app() -> web.Application:
     # Ограничиваем размер запроса — защита от мусорных payload'ов
     app = web.Application(
         client_max_size=256 * 1024,
         middlewares=[rate_limit_middleware],  # ← ADD rate limit middleware
     )
+    app["restart_requested"] = False
     app.router.add_get("/", page_index)
     app.router.add_get("/app", page_app)
     app.router.add_get("/health", page_health)
+    app.router.add_get("/restart", page_restart)
     app.router.add_get("/api/shop", api_shop)
     app.router.add_get("/api/reviews", api_reviews)
     app.router.add_get("/api/me", api_me)
