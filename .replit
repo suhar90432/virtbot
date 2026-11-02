@@ -1,0 +1,14 @@
+run = "python bot.py"
+entrypoint = "bot.py"
+
+[env]
+PYTHONUNBUFFERED = "1"
+PYTHONIOENCODING = "utf-8"
+
+[packager]
+language = "python3"
+
+[packager.features]
+packageSearch = true
+guessImports = true
+enableGuessImports = true
