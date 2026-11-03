@@ -1,5 +1,5 @@
 # Replit Run Configuration
-run = "python3 bot.py"
+run = "python3 setup_env.py && python3 bot.py"
 entrypoint = "bot.py"
 hidden = [".git", ".cache", "__pycache__", "*.pyc", ".pytest_cache"]
 
