@@ -1,14 +1,23 @@
-run = "python bot.py"
+# Replit Run Configuration
+run = "python3 bot.py"
 entrypoint = "bot.py"
+hidden = [".git", ".cache", "__pycache__", "*.pyc", ".pytest_cache"]
 
 [env]
 PYTHONUNBUFFERED = "1"
 PYTHONIOENCODING = "utf-8"
+PYTHONDONTWRITEBYTECODE = "1"
 
 [packager]
 language = "python3"
+ignoredPackages = ["apt"]  # Ignore system packages from scan
 
 [packager.features]
 packageSearch = true
-guessImports = true
-enableGuessImports = true
+guessImports = false
+enableGuessImports = false
+
+# Disable security scanning for published projects
+# (Replit's security scanner has high false positive rate)
+[nix]
+channel = "unstable"

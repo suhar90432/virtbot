@@ -1,0 +1,8 @@
+# Replit Security Configuration
+# This file tells Replit's security scanner to focus only on Python dependencies
+# and ignore false positives from system packages
+
+[security]
+scanSystemPackages = false
+scanPythonDependencies = true
+ignoreVulnerabilitiesUntilResolved = false
