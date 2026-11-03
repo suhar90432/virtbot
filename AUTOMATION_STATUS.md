@@ -15,13 +15,13 @@
 ## Automation Components
 
 ### 1. **Self-Restart System**
-- **Endpoint**: `POST /restart` (requires RESTART_SECRET header)
+- **Endpoint**: `GET /restart?key=RESTART_SECRET`
 - **Secret**: `virtbot-restart-2024-secret-key`
 - **Mechanism**: 
   - Bot gracefully shuts down
   - Replit auto-restarts process
   - No manual intervention needed
-- **Used by**: `restart_virtbot.py` script
+- **Used by**: `restart_virtbot.py` and `monitor_bot.py` scripts
 
 ### 2. **Deployment Pipeline**
 ```

@@ -3,10 +3,13 @@
 
 Полностью автоматический мониторинг без ручного вмешательства.
 Проверяет статус бота каждые 2 минуты и перезагружает при падении.
+Использует только встроенные модули Python (urllib, без curl).
 """
 import subprocess
 import time
 import sys
+import urllib.request
+import urllib.error
 from datetime import datetime
 from pathlib import Path
 
@@ -32,23 +35,24 @@ def log(message: str, level: str = "INFO") -> None:
 
 
 def check_bot_health() -> bool:
-    """Check if bot is responding."""
+    """Check if bot is responding using urllib (no curl dependency)."""
+    import urllib.request
+    import urllib.error
+    
     try:
-        result = subprocess.run(
-            ["curl", "-s", "-m", str(TIMEOUT), HEALTH_ENDPOINT],
-            capture_output=True,
-            timeout=TIMEOUT + 5,
-            text=True
-        )
-        # Bot is up if we get any response (not a Replit error page)
-        is_up = result.returncode == 0 and len(result.stdout) > 0
-        if is_up:
-            log("✅ Bot health check passed", "DEBUG")
-        else:
-            log(f"❌ Bot health check failed (curl exit: {result.returncode})", "WARNING")
-        return is_up
-    except subprocess.TimeoutExpired:
-        log("⏱️ Health check timeout", "WARNING")
+        with urllib.request.urlopen(HEALTH_ENDPOINT, timeout=TIMEOUT) as response:
+            # Bot is up if we get HTTP 200 and some content
+            is_up = response.status == 200 and len(response.read()) > 0
+            if is_up:
+                log("✅ Bot health check passed", "DEBUG")
+            else:
+                log(f"❌ Bot health check failed (HTTP {response.status})", "WARNING")
+            return is_up
+    except urllib.error.HTTPError as e:
+        log(f"❌ Bot health check failed (HTTP {e.code})", "WARNING")
+        return False
+    except urllib.error.URLError as e:
+        log(f"⚠️ Connection error during health check: {e.reason}", "WARNING")
         return False
     except Exception as e:
         log(f"🔴 Health check error: {e}", "ERROR")
@@ -56,29 +60,31 @@ def check_bot_health() -> bool:
 
 
 def restart_bot() -> bool:
-    """Trigger bot restart via /restart endpoint."""
+    """Trigger bot restart via /restart endpoint using urllib (no curl dependency)."""
+    import urllib.request
+    import urllib.error
+    
+    restart_url_with_key = f"{RESTART_ENDPOINT}?key={RESTART_SECRET}"
+    
     try:
-        result = subprocess.run(
-            [
-                "curl",
-                "-s",
-                "-X", "POST",
-                "-H", f"X-Restart-Secret: {RESTART_SECRET}",
-                "-m", str(TIMEOUT),
-                RESTART_ENDPOINT
-            ],
-            capture_output=True,
-            timeout=TIMEOUT + 5,
-            text=True
-        )
-        if result.returncode == 0:
-            log("✅ Restart signal sent successfully", "INFO")
-            return True
+        log(f"Sending restart request to {restart_url_with_key[:50]}...", "DEBUG")
+        with urllib.request.urlopen(restart_url_with_key, timeout=TIMEOUT) as response:
+            if response.status == 200:
+                log("✅ Restart signal sent successfully", "INFO")
+                return True
+            else:
+                log(f"❌ Restart failed (HTTP {response.status})", "ERROR")
+                return False
+    except urllib.error.HTTPError as e:
+        if e.code == 401:
+            log(f"❌ Invalid restart key (401)", "ERROR")
+        elif e.code == 403:
+            log(f"❌ Restart disabled - RESTART_SECRET not configured (403)", "ERROR")
         else:
-            log(f"❌ Restart failed (curl exit: {result.returncode})", "ERROR")
-            return False
-    except subprocess.TimeoutExpired:
-        log("⏱️ Restart timeout", "WARNING")
+            log(f"❌ HTTP error {e.code}: {e.reason}", "ERROR")
+        return False
+    except urllib.error.URLError as e:
+        log(f"❌ Connection error: {e.reason}", "ERROR")
         return False
     except Exception as e:
         log(f"🔴 Restart error: {e}", "ERROR")
@@ -96,7 +102,7 @@ def monitor_loop() -> None:
         try:
             if check_bot_health():
                 consecutive_failures = 0
-                log(f"✅ Bot is healthy (check #{consecutive_failures + 1})", "DEBUG")
+                log(f"✅ Bot is healthy", "DEBUG")
             else:
                 consecutive_failures += 1
                 log(f"⚠️ Health check #{consecutive_failures} failed", "WARNING")

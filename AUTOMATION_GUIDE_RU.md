@@ -63,11 +63,18 @@ git push origin master
 python C:\Users\ckanu\restart_virtbot.py
 ```
 
-**Вариант B: Вручную через curl**
+**Вариант B: Вручную через PowerShell**
 ```powershell
-$secret = "virtbot-restart-2024-secret-key"
-$url = "https://fb218da8-6665-478e-b7f8-ea5765b00c80-00-2e6ufi9c4x0y9.sisko.replit.dev/restart"
-curl -X POST -H "X-Restart-Secret: $secret" $url
+# Простой способ (только Python, без зависимостей)
+python -c "
+import urllib.request
+url = 'https://fb218da8-6665-478e-b7f8-ea5765b00c80-00-2e6ufi9c4x0y9.sisko.replit.dev/restart?key=virtbot-restart-2024-secret-key'
+try:
+    response = urllib.request.urlopen(url, timeout=10)
+    print(f'Рестарт инициирован: {response.status}')
+except Exception as e:
+    print(f'Ошибка: {e}')
+"
 ```
 
 ---
@@ -133,7 +140,25 @@ virtbot_repo/
 
 ---
 
-## 🔧 Что можно настроить
+## 🔧 Зависимости
+
+### Monitor_bot.py
+- **Python**: 3.8+
+- **Встроенные модули только**: `urllib.request`, `urllib.error`, `subprocess`, `time`, `sys`, `datetime`, `pathlib`
+- **Внешние зависимости**: ❌ НЕТУ
+- **Требует curl**: ❌ НЕТ
+- **Требует интернет**: ✅ Да (для проверки здоровья бота)
+
+### Restart_virtbot.py
+- **Python**: 3.8+
+- **Встроенные модули только**: `urllib.request`, `urllib.error`, `sys`, `json`, `datetime`, `pathlib`
+- **Внешние зависимости**: ❌ НЕТУ
+- **Требует curl**: ❌ НЕТ
+
+### Install_monitor.bat
+- **ОС**: Windows только
+- **Требует**: Administrator права
+- **Проверяет**: Python + встроенные модули
 
 ### Интервал мониторинга
 **В `monitor_bot.py`**, строка 16:
